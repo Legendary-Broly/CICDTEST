@@ -39,9 +39,15 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           artifactsPath: artifacts
           checkname: sanity
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ""
+          UNITY_EMAIL: ""
+          UNITY_PASSWORD: ""
 
       - name: Upload test artifacts
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: Unity-Test-Results
           path: artifacts
