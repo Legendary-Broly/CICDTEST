@@ -2,18 +2,43 @@ name: CI
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   sanity:
+    name: sanity
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Run Unity tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      # Speeds up subsequent runs a lot
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ runner.os }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ runner.os }}-
+
+      - name: Run EditMode tests (Unity)
         uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: 6000.3.2f1
           testMode: editmode
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          artifactsPath: artifacts
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unity-Test-Results
+          path: artifacts
+          if-no-files-found: ignore
