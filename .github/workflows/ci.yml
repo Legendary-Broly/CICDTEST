@@ -2,12 +2,47 @@ name: CI
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   sanity:
+    timeout-minutes: 30
+    name: sanity
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Sanity check
-        run: echo "CI is running."
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      # Speeds up subsequent runs a lot
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ runner.os }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ runner.os }}-
+
+      - name: Run EditMode tests (Unity)
+        uses: game-ci/unity-test-runner@v4
+        with:
+          # Use a base64-encoded Unity_lic.ulf file from a previously activated
+          # Unity Personal installation and store it in the UNITY_LICENSE secret.
+          # Avoid email/password or serial-based activation (Unity Personal has
+          # no serial), otherwise Unity will report "serial invalid".
+          activationMode: manual
+          unityLicenses: ${{ secrets.UNITY_LICENSE }}
+          unityVersion: 6000.3.2f1
+          testMode: editmode
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          artifactsPath: artifacts
+          checkname: sanity
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unity-Test-Results
+          path: artifacts
+          if-no-files-found: ignore
