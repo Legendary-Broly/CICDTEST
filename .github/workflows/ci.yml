@@ -27,11 +27,13 @@ jobs:
 
       - name: Run EditMode tests (Unity)
         uses: game-ci/unity-test-runner@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
+          # Use a base64-encoded Unity_lic.ulf file from a previously activated
+          # Unity Personal installation and store it in the UNITY_LICENSE secret.
+          # Avoid email/password or serial-based activation (Unity Personal has
+          # no serial), otherwise Unity will report "serial invalid".
+          activationMode: manual
+          unityLicenses: ${{ secrets.UNITY_LICENSE }}
           unityVersion: 6000.3.2f1
           testMode: editmode
           githubToken: ${{ secrets.GITHUB_TOKEN }}
